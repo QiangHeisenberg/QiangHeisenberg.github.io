@@ -68,6 +68,144 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-second" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2020/07/06/second/" class="article-date">
+  <time datetime="2020-07-06T07:22:38.000Z" itemprop="datePublished">2020-07-06</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/07/06/second/">second</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>常量，类型以及函数的名称和类型。阶段1将收集有关类型和方法的所有信息，进行类型检查。</p>
+<p>强类型和弱类型，静态类型和动态类型并没有一个严格的定义。</p>
+<p>强类型的编程语言在编译期间会有着更严格的类型限制，也就是编译器会在编译期间发现变量赋值、返回值和函数调用时的类型错误，而弱类型的语言在出现类型错误时可能会在运行时进行隐式的类型转换。一些说法是，强类型在遇到类型不匹配时需要进行显式的类型转换，而弱类型在遇到相同的情况是会进行隐式的类型转化。按照这个标准来说，Go也是强类型的编程语言。</p>
+<p>静态类型检查是基于对源代码的分析来确定运行程序类型安全的过程，如果我们的代码能够通过静态类型的检查，那么当前程序在一定程度上就满足了类型安全的要求，它可以被看作是一种代码优化的方式，能够减少程序在运行时的类型检查。</p>
+<p>动态类型检查就是在运行时确定程序类型安全的过程，这个过程需要编程语言在编译时为所有的对象加入类型标签和信息，运行时就可以使用这些存储的类型信息来实现动态派发、向下转型、反射以及相似的特性。</p>
+<ol>
+<li>检查常量、类型和函数的类型；</li>
+<li>处理变量的赋值；</li>
+<li>对函数的主体进行类型检查；</li>
+<li>决定如何捕获变量；</li>
+<li>检查内联函数的类型；</li>
+<li>进行逃逸分析；</li>
+</ol>
+<p>类型检查是 Go 语言编译的第二个阶段，在词法和语法分析之后我们得到了每个文件对应的抽象语法树，随后的类型检查会遍历抽象语法树中的节点，对每个节点的类型进行检验，找出其中存在的语法错误，在这个过程中也可能会对抽象语法树进行改写，这不仅能够去除一些不会被执行的代码对编译进行优化提高执行效率，而且也会修改 <code>make</code> 等关键字对应节点的操作类型。</p>
+<p>注：Xtop保存有抽象语法树的所有节点。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Phase 1: const, type, and names and types of funcs.</span></span><br><span class="line"><span class="comment">// 常量，类型，函数签名的类型检查</span></span><br><span class="line">timings.Start(<span class="string">"fe"</span>, <span class="string">"typecheck"</span>, <span class="string">"top1"</span>)</span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(xtop); i++ &#123;</span><br><span class="line">	n := xtop[i]</span><br><span class="line">	<span class="keyword">if</span> op := n.Op; op != ODCL &amp;&amp; op != OAS &amp;&amp; op != OAS2 &amp;&amp; (op != ODCLTYPE || !n.Left.Name.Param.Alias) &#123;</span><br><span class="line">		xtop[i] = typecheck(n, ctxStmt)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Phase 2: Variable assignments.</span></span><br><span class="line"><span class="comment">// 变量定义及赋值的类型检查</span></span><br><span class="line">timings.Start(<span class="string">"fe"</span>, <span class="string">"typecheck"</span>, <span class="string">"top2"</span>)</span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(xtop); i++ &#123;</span><br><span class="line">	n := xtop[i]</span><br><span class="line">	<span class="keyword">if</span> op := n.Op; op == ODCL || op == OAS || op == OAS2 || op == ODCLTYPE &amp;&amp; n.Left.Name.Param.Alias &#123;</span><br><span class="line">		xtop[i] = typecheck(n, ctxStmt)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Phase 3: Type check function bodies.</span></span><br><span class="line"><span class="comment">// 函数体的类型检查</span></span><br><span class="line">timings.Start(<span class="string">"fe"</span>, <span class="string">"typecheck"</span>, <span class="string">"func"</span>)</span><br><span class="line"><span class="keyword">var</span> fcount <span class="keyword">int64</span></span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(xtop); i++ &#123;</span><br><span class="line">	n := xtop[i]</span><br><span class="line">	<span class="keyword">if</span> op := n.Op; op == ODCLFUNC || op == OCLOSURE &#123;</span><br><span class="line">		Curfn = n</span><br><span class="line">		decldepth = <span class="number">1</span></span><br><span class="line">		saveerrors()</span><br><span class="line">		typecheckslice(Curfn.Nbody.Slice(), ctxStmt)</span><br><span class="line">		checkreturn(Curfn)</span><br><span class="line">		<span class="keyword">if</span> nerrors != <span class="number">0</span> &#123;</span><br><span class="line">			Curfn.Nbody.Set(<span class="literal">nil</span>) </span><br><span class="line">		&#125;</span><br><span class="line">		deadcode(Curfn)</span><br><span class="line">		fcount++</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译器类型检查的主要逻辑都在 <code>typecheck</code> 和 <code>typecheck1</code> 这两个函数中。</p>
+<p><code>typecheck</code> 的主要作用就是判断编译器是否对当前节点执行过类型检查，同时做一些类型检查之前的准备工作。这个函数里边调用了另一个函数<code>typecheck1</code>。这个函数是类型检查的核心函数。</p>
+<p><code>typecheck1</code> 包含1700多行代码，大部分代码是一个switch/case结构，根据传入点的操作类型的不同，进入不同的case中进行工作。所有的操作类型大概200个，全部定义在文件syntax.go中。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 然后通过checkMapKeys检查哈希中键的类型。因为在此之前我们可能会因其他错误而退出，从而跳过了map键错误。</span></span><br><span class="line">checkMapKeys()</span><br></pre></td></tr></table></figure>
+
+<p>该函数会遍历 <code>mapqueue</code> 队列中等待检查的节点，判断这些类型能否作为哈希的键，如果当前类型并不合法就会在类型检查的阶段直接报错中止整个检查的过程。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">checkMapKeys</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> _, n := <span class="keyword">range</span> mapqueue &#123;</span><br><span class="line">		k := n.Type.MapType().Key</span><br><span class="line">		<span class="keyword">if</span> !k.Broke() &amp;&amp; !IsComparable(k) &#123;</span><br><span class="line">			yyerrorl(n.Pos, <span class="string">"invalid map key type %v"</span>, k)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	mapqueue = <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>死代码消除：</p>
+<p>之前：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Max</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> a &gt; b &#123;</span><br><span class="line">                <span class="keyword">return</span> a</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> b</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">F</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">const</span> a, b = <span class="number">100</span>, <span class="number">20</span></span><br><span class="line">        <span class="keyword">if</span> Max(a, b) == b &#123;</span><br><span class="line">                <span class="built_in">panic</span>(b)</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>之后：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">F</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">const</span> a, b = <span class="number">100</span>, <span class="number">20</span></span><br><span class="line">        <span class="keyword">var</span> result <span class="keyword">int</span></span><br><span class="line">        <span class="keyword">if</span> <span class="literal">true</span> &#123;</span><br><span class="line">                result = a</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                result = b</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> result == b &#123;</span><br><span class="line">                <span class="built_in">panic</span>(b) </span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">F</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">const</span> a, b = <span class="number">100</span>, <span class="number">20</span></span><br><span class="line">        <span class="keyword">const</span> result = a</span><br><span class="line">        <span class="keyword">if</span> result == b &#123;</span><br><span class="line">                <span class="built_in">panic</span>(b) </span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">F</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">const</span> a, b = <span class="number">100</span>, <span class="number">20</span></span><br><span class="line">        <span class="keyword">const</span> result = a</span><br><span class="line">        <span class="keyword">if</span> <span class="literal">false</span> &#123;</span><br><span class="line">                <span class="built_in">panic</span>(b) </span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">F</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">const</span> a, b = <span class="number">100</span>, <span class="number">20</span></span><br><span class="line">        <span class="keyword">const</span> result = a</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">F</span><span class="params">()</span></span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Phase4：如何捕捉变量</strong></p>
+<p>完成所有类型检查后，将在单独的阶段中调用capturevars。它决定是否应该通过值或引用来捕获由闭包捕获的每个变量。对于小于等于128字节的值，我们将使用值捕获，捕获后再也不会重新分配（有效常数）。</p>
+<p>接下来进行捕获封闭变量。这需要在逃逸分析之前运行，因为按值捕获的变量不会发生逃逸。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Phase 4: Decide how to capture closed variables.</span></span><br><span class="line"><span class="comment">// 捕获变量</span></span><br><span class="line">timings.Start(<span class="string">"fe"</span>, <span class="string">"capturevars"</span>)</span><br><span class="line"><span class="keyword">for</span> _, n := <span class="keyword">range</span> xtop &#123;</span><br><span class="line">	<span class="keyword">if</span> n.Op == ODCLFUNC &amp;&amp; n.Func.Closure != <span class="literal">nil</span> &#123;</span><br><span class="line">		Curfn = n</span><br><span class="line">		capturevars(n)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">capturevarscomplete = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">Curfn = <span class="literal">nil</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> nsavederrors+nerrors != <span class="number">0</span> &#123;</span><br><span class="line">	errorexit()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Phase5：内联</strong></p>
+<p><strong>什么是内联</strong>：内联是将较小的函数组合到各自的调用程序中的行为。在计算的早期，这种优化通常是手工完成的。如今，内联是在编译过程中自动执行的一类基本优化之一。</p>
+<p><strong>为什么要进行内联</strong>：首先是它消除了函数调用本身的开销。第二个是它允许编译器更有效地应用其他优化策略。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">max</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> a &gt; b &#123;</span><br><span class="line">        <span class="keyword">return</span> a</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> b</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> Result <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkMax</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> r <span class="keyword">int</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        r = max(<span class="number">-1</span>, i)</span><br><span class="line">    &#125;</span><br><span class="line">    Result = r</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>手动内联之后：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkMax</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> r <span class="keyword">int</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="keyword">if</span> <span class="number">-1</span> &gt; i &#123;</span><br><span class="line">            r = <span class="number">-1</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            r = i</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    Result = r</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>效果提升了78%。</p>
+<p><strong>phase6：逃逸分析</strong></p>
+<p>也就是由编译器决定内存分配的位置，不需要程序员指定。变量分配在堆上还是栈上不是由是否new/malloc决定，而是通过编译器的“逃逸分析”来决定。</p>
+<p>在编译程序优化理论中，逃逸分析是一种确定指针动态范围的方法——分析在程序的哪些地方可以访问到指针。也是就是说逃逸分析是解决指针作用范围的编译优化方法。编程中常见的两种逃逸情景：</p>
+<p>​        1，函数中局部对象指针被返回（不确定被谁访问）</p>
+<p>​        2，对象指针被多个子程序（如线程协程）共享使用</p>
+<p>逃逸分析用于优化程序，函数中生成一个新对象：</p>
+<p>​        1，如果分配到栈上，待函数返回资源就被回收了</p>
+<p>​        2，如果分配到堆上，函数返回后交给GC来管理该对象资源</p>
+<p>栈资源的分配及回收速度比堆要快，所以逃逸分析最大的好处应该是减少了GC的压力。</p>
+<p><strong>逃逸策略</strong></p>
+<p>每当函数中申请新的对象，编译器会跟据该对象是否被函数外部引用来决定是否逃逸：</p>
+<ol>
+<li>如果函数外部没有引用，则优先放到栈中；</li>
+<li>如果函数外部存在引用，则必定放到堆中；</li>
+</ol>
+<p>注意，对于函数外部没有引用的对象，也有可能放到堆中，比如内存过大超过栈的存储能力。</p>
+<p>逃逸分析的好处：减少GC的压力，不逃逸的对象分配在栈上，函数返回时回收，不需要GC标记清除，栈的回收速度更快；逃逸的对象分配在堆上，函数返回后交给GC来管理该对象资源。</p>
+<p><strong>指针逃逸：</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Student <span class="keyword">struct</span> &#123;</span><br><span class="line">    Name <span class="keyword">string</span></span><br><span class="line">    Age  <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">StudentRegister</span><span class="params">(name <span class="keyword">string</span>, age <span class="keyword">int</span>)</span> *<span class="title">Student</span></span> &#123;</span><br><span class="line">    s := <span class="built_in">new</span>(Student) 			<span class="comment">//局部变量s逃逸到堆 局部变量指针被返回</span></span><br><span class="line"></span><br><span class="line">    s.Name = name</span><br><span class="line">    s.Age = age</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> s</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    StudentRegister(<span class="string">"Jim"</span>, <span class="number">18</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>栈空间不足引起的逃逸：</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Slice</span><span class="params">()</span></span> &#123;</span><br><span class="line">    s := <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">10000</span>, <span class="number">10000</span>)   <span class="comment">// 切片所占空间过大，栈无法存放；或者无法判断当前切片长度时会将对象分配到堆中发生逃逸。</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> index, _ := <span class="keyword">range</span> s &#123;</span><br><span class="line">        s[index] = index</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    Slice()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>动态类型逃逸：</strong></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    s := <span class="string">"Escape"</span></span><br><span class="line">    fmt.Println(s)		<span class="comment">// 类似于函数Println, 参数为interface类型，在编译期间很难确定参数的具体类型，也会产生逃逸。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>逃逸分析的总结：</p>
+<ul>
+<li>栈上分配内存比在堆中分配内存有更高的效率</li>
+<li>栈上分配的内存不需要GC处理</li>
+<li>堆上分配的内存使用完毕会交给GC处理</li>
+<li>逃逸分析目的是决定内分配地址是栈还是堆</li>
+<li>逃逸分析在编译阶段完成</li>
+</ul>
+<p><strong>phase7：闭包转换</strong></p>
+<p>阶段7：转换闭包主体以正确引用捕获的变量。</p>
+<p>什么是闭包：Go 函数可以是一个闭包。闭包是一个函数值，它引用了函数体之外的变量。 这个函数可以对这个引用的变量进行访问和赋值</p>
+<p>闭包是匿名函数与匿名函数所引用环境的<strong>组合</strong>。匿名函数有动态创建的特性，该特性使得匿名函数不用通过参数传递的方式，就可以直接引用外部的变量。这就类似于常规函数直接使用全局变量一样，个人理解为：<strong>匿名函数和它引用的变量以及环境，类似常规函数引用全局变量处于一个包的环境。</strong></p>
+<p>闭包的意义：</p>
+<p>1，没有闭包的时候，函数执行完毕后就无法再更改函数中变量的值（应该是内存释放了）；有了闭包后函数就成为了一个变量的值，只要变量没被释放，函数就会一直处于存活并独享的状态，因此可以后期更改函数中变量的值（因为这样就不会被go给回收内存了，会一直缓存在那里）。</p>
+<p>2，缩小变量作用域，减少对全局变量的污染。下面的累加如果用全局变量进行实现，全局变量容易被其他人污染。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	n := <span class="number">0</span></span><br><span class="line">	f := <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">		n += <span class="number">1</span></span><br><span class="line">		<span class="keyword">return</span> n</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(f())  </span><br><span class="line">	fmt.Println(f())</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">输出：</span></span><br><span class="line"><span class="comment">1</span></span><br><span class="line"><span class="comment">2</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">n := <span class="number">0</span></span><br><span class="line">	f := <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">		n += <span class="number">1</span></span><br><span class="line">		<span class="keyword">return</span> n</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述代码就是一个闭包。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://lizzqi.com/2020/07/06/second/" data-id="ckca6iyh000008suy2uswercf" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/compile/" rel="tag">compile</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/golang/" rel="tag">golang</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-AST到SSA流程分析" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2020/07/06/AST%E5%88%B0SSA%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/" class="article-date">
@@ -286,6 +424,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2020/07/06/second/">second</a>
+          </li>
         
           <li>
             <a href="/2020/07/06/AST%E5%88%B0SSA%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">AST到SSA流程分析</a>
