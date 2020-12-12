@@ -1,14 +1,8 @@
 
 
-  
 
 
 
-
-  
-
-
-  
 
 
 <!doctype html>
@@ -22,9 +16,11 @@
   
   
   
-    <meta name="description" content="golang'Rust">
+    <meta name="description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。
+开始之前我们了解一下并行和并发。
+在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行...">
   
-  <title>Archives: 11/2020: 2020 [ 七昻 ]</title>
+  <title>Go runtime之内存管理 [ 七昻 ]</title>
   
   
     <link rel="shortcut icon" href="/hollow.ico">
@@ -45,6 +41,15 @@
 <body>
 <div class="side-navigate hide-area">
   
+  
+    <div class="item next">
+      <a href="/2020/12/05/Rust%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">
+        <div class="item-icon"></div>
+      </a>
+      <div class="item-title">
+        Rust之生命周期
+      </div>
+    </div>
   
 </div>
 <div id="outer-container" class="hide-area">
@@ -70,7 +75,7 @@
           </li>
         
           
-            <li class="active">
+            <li>
           
             <a href="/archives">Archives</a>
             
@@ -116,153 +121,73 @@
     <div id="content-inner">
       
       
-  <article>
-    
+  
 
-  <div id="recent-posts">
-    <h1>Archives
-    
-        <span class="posts-count">
-        Total
-        3
-        
-            post
-        
+  <article id="post">
+    <h1>Go runtime之内存管理</h1>
+    <p class="page-title-sub">
+      <span id = "post-title-date">Created at 2020-12-08</span>
+      
+        <span id = "post-title-updated">Updated at 2020-12-12</span>
+      
+      
+      
+        <span id = "post-title-tags">
+          Tag
+          
+          
+            
+            
+            <a href="/tags/Go-runtime/">-Go -runtime</a>
+          
         </span>
-    
-    </h1>
-    
-    
-    
-        
-        
-            
-        
-        
-    
-        
-        
-        
-    
-        
-        
-        
-    
-    
-    
-        
-        
-            
-            <h3 class="archive-year-title">2020
-            
-                <span class="posts-count">
-                Total
-                3
-                
-                    posts
-                
-                </span>
-            
-            </h3>
-        
-        <div class="post-title-item">
-  
-  <a href="/2020/12/08/Go之内存管理/">
-  
-    Go runtime之内存管理
-  
-  </a>
-  <p class="page-title-sub">
-    <span id = "post-title-date">12-8</span>
-    
-    
-    <span id = "post-title-tags">
-    Tag
-    
-    
       
-      
-      <a href="/tags/Go-runtime/">-Go -runtime</a>
+      <span id="/2020/12/08/Go之内存管理/" class="leancloud-visitors" data-flag-title="Go runtime之内存管理">
+        <i class="leancloud-visitors-count"></i>
+        <em class="post-meta-item-text"> views </em>
+      </span>
+    </p>
     
-    </span>
-    
-    
-      <br>
-      
-      
-    
-  </p>
-  
-</div>
-    
-        
-        
-        <div class="post-title-item">
-  
-  <a href="/2020/12/05/Rust之生命周期/">
-  
-    Rust之生命周期
-  
-  </a>
-  <p class="page-title-sub">
-    <span id = "post-title-date">12-5</span>
-    
-    
-    <span id = "post-title-tags">
-    Tag
-    
-    
-      
-      
-      <a href="/tags/rust/">-rust</a>
-    
-    </span>
-    
-    
-      <br>
-      
-      
-    
-  </p>
-  
-</div>
-    
-        
-        
-        <div class="post-title-item">
-  
-  <a href="/2020/11/30/rust之所有权/">
-  
-    rust之所有权
-  
-  </a>
-  <p class="page-title-sub">
-    <span id = "post-title-date">11-30</span>
-    
-    
-    <span id = "post-title-tags">
-    Tag
-    
-    
-      
-      
-      <a href="/tags/rust/">-rust</a>
-    
-    </span>
-    
-    
-      <br>
-      
-      
-    
-  </p>
-  
-</div>
-    
-  </div>
-
+    <p>Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。</p>
+<p>开始之前我们了解一下<strong><em>并行和并发</em></strong>。</p>
+<p>在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后在需要的时候切换到原来的进程中继续运行。就像切换跑道。由于切换的速度很快所以你并不一定能感受到。这种情况叫做<strong>并发</strong>。</p>
+<p>而真正的<strong>并行</strong>是针对多核的情况而言的，每一个核都有一个进程，进程之间不受影响。</p>
+<p>一个进程也可以看做是一个任务。</p>
+<p>然后简单了解一下<strong><em>进程和线程</em></strong>。</p>
+<p>一个进程可以有多个线程，线程之间可以共享进程的内存空间。但是为了防止线程之间抢占内存造成问题，所以，采用了锁的概念：也就是当一个线程占用了一个内存的时候-&gt;加锁，使用结束-&gt;解锁，其他线程进行使用。</p>
+<p>也就是说，计算机可以有多进程运行，这时分为并行和并发；每一个进程可以分为不同的部分运行，也就是不同的线程完成各自的部分。</p>
+<p>关于线程和进程可以参考<a href="http://www.ruanyifeng.com/blog/2013/04/processes_and_threads.html" target="_blank" rel="noopener">这篇文章</a>。</p>
+<p>最后再简单了解一下Go的调度机制。</p>
+<p>go实现了自己的协程叫做goroutine。涉及到了三个重要的结构，G、M、P：</p>
+<p>M :代表内核级线程，一个M就是一个线程，goroutine就是跑在M之上的；M是一个很大的结构，里面维护小对象内存cache（mcache）、当前执行的goroutine、随机数发生器等等非常多的信息<br>G :代表一个goroutine，它有自己的栈，instruction pointer和其他信息（正在等待的channel等等），用于调度。<br>P :P全称是Processor，处理器，它的主要用途就是用来执行goroutine的，所以它也维护了一个goroutine队列，里面存储了所有需要它来执行的goroutine。</p>
+<p>知道了以上这些，现在我们分析一下go的内存管理。</p>
 
   </article>
+  <div class="random-toc-area">
+  <button class="btn-hide-toc btn-hide-toc-show" style="display: none" onclick="TOCToggle()">Show TOC</button>
+  <button class="btn-hide-toc btn-hide-toc-hide" onclick="TOCToggle()">Hide TOC</button>
+  <div class="random-toc">
+    <h2>Table of Content</h2>
+    
+  </div>
+</div>
+
+  
+  
+<nav id="pagination">
+  
+
+  
+
+  
+    <a href="/2020/12/05/Rust%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" class="next">Next post Rust之生命周期 &rarr;</a>
+  
+</nav>
+
+  <!-- JiaThis Button BEGIN -->
+
+<!-- JiaThis Button END -->
+
 
       
       
