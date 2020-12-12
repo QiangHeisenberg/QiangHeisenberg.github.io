@@ -161,6 +161,7 @@
 <p>go实现了自己的协程叫做goroutine。涉及到了三个重要的结构，G、M、P：</p>
 <p>M :代表内核级线程，一个M就是一个线程，goroutine就是跑在M之上的；M是一个很大的结构，里面维护小对象内存cache（mcache）、当前执行的goroutine、随机数发生器等等非常多的信息<br>G :代表一个goroutine，它有自己的栈，instruction pointer和其他信息（正在等待的channel等等），用于调度。<br>P :P全称是Processor，处理器，它的主要用途就是用来执行goroutine的，所以它也维护了一个goroutine队列，里面存储了所有需要它来执行的goroutine。</p>
 <p>知道了以上这些，现在我们分析一下go的内存管理。</p>
+<p><strong>未完待续</strong></p>
 
   </article>
   <div class="random-toc-area">
