@@ -1,163 +1,63 @@
-
-
-
-
-
-
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <meta name="author" content="李自强">
-  
-  
-  
-  
-    <meta name="description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。
-开始之前我们了解一下并行和并发。
-在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行...">
-  
-  <title>Go runtime之内存管理 [ 七昻 ]</title>
-  
-  
-    <link rel="shortcut icon" href="/hollow.ico">
-  
-  
-  
-<link rel="stylesheet" href="/css/random.css">
-<link rel="stylesheet" href="/css/vegas.min.css">
-<link rel="stylesheet" href="/css/highlight-railscasts.css">
-<link rel="stylesheet" href="/css/jquery.fancybox.css">
-<link rel="stylesheet" href="/css/iconfont/iconfont.css">
-<link rel="stylesheet" href="/css/jquery.fancybox-thumbs.css">
-<link rel="stylesheet" href="/css/plyr.css">
-
-  
-<meta name="generator" content="Hexo 4.2.1"></head>
-
-<body>
-<div class="side-navigate hide-area">
-  
-    <div class="item prev">
-      <a href="/2020/12/12/LeetCode%E6%95%B0%E7%BB%84/">
-        <div class="item-icon"></div>
-      </a>
-      <div class="item-title">
-        LeetCode数组
-      </div>
-    </div>
-  
-  
-    <div class="item next">
-      <a href="/2020/12/05/Rust%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">
-        <div class="item-icon"></div>
-      </a>
-      <div class="item-title">
-        Rust之生命周期
-      </div>
-    </div>
-  
-</div>
-<div id="outer-container" class="hide-area">
-<div id="container">
-  <div id="menu-outer" class="slide-down">
-    <div id="menu-inner">
-      <div id="brand">
-        
-        <a onClick="openUserCard()">
-          <img id="avatar" src="https://avatars2.githubusercontent.com/u/2735087?s=60&u=775d4033139cae6b23c593bcf59fa433224ba4e3&v=4"/>
-          <div id="homelink">七昻</div>
-        </a>
-      </div>
-      <div id="menu-list">
-        <ul>
-        
-        
-          
-            <li>
-          
-            <a href="/index.html">Home</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/archives">Archives</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/tags">Tags</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/categories">Categories</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/about">About</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="https://github.com/stiekel" target="_blank" rel="noopener">Github</a>
-            
-          </li>
-        
-        </ul>
-      </div>
-      <div id="show-menu">
-        <button>Menu</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="content-outer">
-    <div id="content-inner">
-      
-      
-  
-
-  <article id="post">
-    <h1>Go runtime之内存管理</h1>
-    <p class="page-title-sub">
-      <span id = "post-title-date">Created at 2020-12-08</span>
-      
-        <span id = "post-title-updated">Updated at 2020-12-12</span>
-      
-      
-      
-        <span id = "post-title-tags">
-          Tag
-          
-          
-            
-            
-            <a href="/tags/Go-runtime/">-Go -runtime</a>
-          
-        </span>
-      
-      <span id="/2020/12/08/Go之内存管理/" class="leancloud-visitors" data-flag-title="Go runtime之内存管理">
-        <i class="leancloud-visitors-count"></i>
-        <em class="post-meta-item-text"> views </em>
-      </span>
-    </p>
+    <meta charset="UTF-8">
     
-    <p>Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。</p>
+    <title>
+        Go runtime之内存管理 |
+        
+        七昻</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。 开始之前我们了解一下并行和并发。 在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go runtime之内存管理">
+<meta property="og:url" content="https://lzi7.com/2020/12/08/Go%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="七昻">
+<meta property="og:description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。 开始之前我们了解一下并行和并发。 在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-12-08T14:13:17.000Z">
+<meta property="article:modified_time" content="2020-12-12T10:30:27.165Z">
+<meta property="article:author" content="heisen">
+<meta property="article:tag" content="-Go -runtime">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://lzi7.com/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://lzi7.com/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://lzi7.com/index.html">Home</a>
+        
+            <a class="false" href="https://lzi7.com/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://lzi7.com/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">Go runtime之内存管理</h1>
+    <time id="post-date" datetime="2020-12-08T14:13:17.000Z">
+        December 08, 2020
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。</p>
 <p>开始之前我们了解一下<strong><em>并行和并发</em></strong>。</p>
 <p>在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后在需要的时候切换到原来的进程中继续运行。就像切换跑道。由于切换的速度很快所以你并不一定能感受到。这种情况叫做<strong>并发</strong>。</p>
 <p>而真正的<strong>并行</strong>是针对多核的情况而言的，每一个核都有一个进程，进程之间不受影响。</p>
@@ -172,192 +72,65 @@
 <p>知道了以上这些，现在我们分析一下go的内存管理。</p>
 <p><strong>未完待续</strong></p>
 
-  </article>
-  <div class="random-toc-area">
-  <button class="btn-hide-toc btn-hide-toc-show" style="display: none" onclick="TOCToggle()">Show TOC</button>
-  <button class="btn-hide-toc btn-hide-toc-hide" onclick="TOCToggle()">Hide TOC</button>
-  <div class="random-toc">
-    <h2>Table of Content</h2>
+    </div>
+</article>
+
+<div id="paginator">
     
-  </div>
 </div>
 
-  
-  
-<nav id="pagination">
-  
-    <a href="/2020/12/12/LeetCode%E6%95%B0%E7%BB%84/" class="prev">&larr; Prev post LeetCode数组</a>
-  
-
-  
-
-  
-    <a href="/2020/12/05/Rust%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" class="next">Next post Rust之生命周期 &rarr;</a>
-  
-</nav>
-
-  <!-- JiaThis Button BEGIN -->
-
-<!-- JiaThis Button END -->
-
-
-      
-      
     </div>
-  </div>
+</div>
 
-  <div id="bottom-outer">
+<div id="bottom-outer">
     <div id="bottom-inner">
-      Site by 李自强 using
-      <a href="http://hexo.io" target="_blank" rel="noopener">Hexo</a> & <a href="https://github.com/stiekel/hexo-theme-random" target="_blank" rel="noopener">Random</a>
-      <br>
-      
+        2019-2021 heisen 皖ICP备16011445号
     </div>
-  </div>
 </div>
 
-</div>
-
-
-<div id="user-card">
-  <div class="center-field">
-    <img class="avatar" src="https://avatars2.githubusercontent.com/u/2735087?s=60&u=775d4033139cae6b23c593bcf59fa433224ba4e3&v=4">
-    <p id="description">golang'Rust</p>
-    <ul class="social-icon">
-  
-  
-    <li>
-      <a href="https://github.com/stiekel" target="_blank" rel="noopener">
-        
-          <i class="icon iconfont github">&#xe606;</i>
-        
-      </a>
-    </li>
-  
-    <li>
-      <a href="http://weibo.com/sidcn" target="_blank" rel="noopener">
-        
-          <i class="icon iconfont weibo">&#xe602;</i>
-        
-      </a>
-    </li>
-  
-    <li>
-      <a href="histkc@gmail.com">
-        
-          M
-        
-      </a>
-    </li>
-  
-</ul>
-  </div>
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
 </div>
 
 
-<div id="btn-view">Hide</div>
+    
+        <script src="https://lzi7.com/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://lzi7.com/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://lzi7.com/js/transition.js"></script>
+    
+        <script src="https://lzi7.com/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
 
 <script>
-// is trigger analytics / tongji script
-var isIgnoreHost = false;
-
-if(window && window.location && window.location.host) {
-  isIgnoreHost = ["localhost","127.0.0.1"].some(function(address){
-    return 0 === window.location.host.indexOf(address);
-  });
-}
-
-var isTriggerAnalytics = !( true && isIgnoreHost );
-
-</script>
-
-
-
-
-  
-  
-    <script src="/js/jquery-2.2.3.min.js"></script>
-  
-    <script src="/js/vegas.min.js"></script>
-  
-    <script src="/js/random.js"></script>
-  
-    <script src="/js/highlight.pack.js"></script>
-  
-    <script src="/js/jquery.mousewheel.pack.js"></script>
-  
-    <script src="/js/jquery.fancybox.pack.js"></script>
-  
-    <script src="/js/jquery.fancybox-thumbs.js"></script>
-  
-    <script src="/js/plyr.js"></script>
-  
-
-<script>
-
-  // fancybox
-  var backgroundImages = [];
-  
-  $('#post').each(function(i){
-    $(this).find('img').each(function(){
-      if ($(this).parent().hasClass('fancybox') || $(this).parent().hasClass('fancybox-thumb')) return;
-      var alt = this.alt || this.title;
-      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
-      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
     });
-    $(this).find('.fancybox').each(function(){
-      $(this).attr('rel', 'post' + i);
-    });
-  });
-  $(".fancybox").fancybox();
-
-var vegasConfig = {"preload­Image":true,"transition":["flash"],"timer":true,"delay":1500000,"shuffle":true,"count":12};
-var unsplashConfig = {"gravity":"center"};
-// is show background images
-var turnoffBackgroundImage = false;
-
-
-
-
-var backgroundColor = "34495E";
-
-$(".fancybox-thumb").fancybox({
-  prevEffect: 'none',
-  nextEffect: 'none',
-  helpers: {
-    title: {
-      type: 'outside'
-    },
-    thumbs: {
-      width: 50,
-      height: 50
-    }
-  }
-});
-
-// show video with plyr
-$(".video-container iframe").each(function(i){
-  var url = $(this).attr('src');
-  var id = url.split('/').pop();
-  var plyrContainer = document.createElement('div');
-  plyrContainer.className = 'plyr';
-  var plyrElement = document.createElement('div');
-  plyrElement.dataset.videoId = id;
-  switch(true) {
-    case url.search('youtube.com') >= 0:
-      plyrElement.dataset.type = 'youtube';
-      break;
-    case url.search('vimeo.com') >= 0:
-      plyrElement.dataset.type = 'vimeo';
-      break;
-    default:
-      return;
-  };
-  plyrContainer.appendChild(plyrElement);
-  $(this).parent().html(plyrContainer);
-});
-plyr.setup('.plyr', {iconUrl: '/css/sprite.svg'});
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
 </script>
 </body>
 </html>
-

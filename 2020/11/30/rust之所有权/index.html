@@ -1,156 +1,63 @@
-
-
-
-
-
-
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <meta name="author" content="李自强">
-  
-  
-  
-  
-    <meta name="description" content="所有程序在运行时都会用到内存，C语言使用手动的方式管理内存，Go等高级语言使用GC（垃圾回收）的方式管理内存，java语言在虚拟机（JVM）上运行，虚拟机同样使用GC管理内存资源。拥有GC的语言运行时的性能相比较没有GC的语言较低。
-而在Rust语言中，性能与C/C++相当，没有GC，他的内存管理方式是使用了所有权，借用，生命周期。这里我们先讲rust语言中的所有权。
-所有权概念：
-
-Rus...">
-  
-  <title>rust之所有权 [ 七昻 ]</title>
-  
-  
-    <link rel="shortcut icon" href="/hollow.ico">
-  
-  
-  
-<link rel="stylesheet" href="/css/random.css">
-<link rel="stylesheet" href="/css/vegas.min.css">
-<link rel="stylesheet" href="/css/highlight-railscasts.css">
-<link rel="stylesheet" href="/css/jquery.fancybox.css">
-<link rel="stylesheet" href="/css/iconfont/iconfont.css">
-<link rel="stylesheet" href="/css/jquery.fancybox-thumbs.css">
-<link rel="stylesheet" href="/css/plyr.css">
-
-  
-<meta name="generator" content="Hexo 4.2.1"></head>
-
-<body>
-<div class="side-navigate hide-area">
-  
-    <div class="item prev">
-      <a href="/2020/12/05/Rust%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/">
-        <div class="item-icon"></div>
-      </a>
-      <div class="item-title">
-        Rust之生命周期
-      </div>
-    </div>
-  
-  
-</div>
-<div id="outer-container" class="hide-area">
-<div id="container">
-  <div id="menu-outer" class="slide-down">
-    <div id="menu-inner">
-      <div id="brand">
-        
-        <a onClick="openUserCard()">
-          <img id="avatar" src="https://avatars2.githubusercontent.com/u/2735087?s=60&u=775d4033139cae6b23c593bcf59fa433224ba4e3&v=4"/>
-          <div id="homelink">七昻</div>
-        </a>
-      </div>
-      <div id="menu-list">
-        <ul>
-        
-        
-          
-            <li>
-          
-            <a href="/index.html">Home</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/archives">Archives</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/tags">Tags</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/categories">Categories</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="/about">About</a>
-            
-          </li>
-        
-          
-            <li>
-          
-            <a href="https://github.com/stiekel" target="_blank" rel="noopener">Github</a>
-            
-          </li>
-        
-        </ul>
-      </div>
-      <div id="show-menu">
-        <button>Menu</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="content-outer">
-    <div id="content-inner">
-      
-      
-  
-
-  <article id="post">
-    <h1>rust之所有权</h1>
-    <p class="page-title-sub">
-      <span id = "post-title-date">Created at 2020-11-30</span>
-      
-        <span id = "post-title-updated">Updated at 2020-12-03</span>
-      
-      
-      
-        <span id = "post-title-tags">
-          Tag
-          
-          
-            
-            
-            <a href="/tags/rust/">-rust</a>
-          
-        </span>
-      
-      <span id="/2020/11/30/rust之所有权/" class="leancloud-visitors" data-flag-title="rust之所有权">
-        <i class="leancloud-visitors-count"></i>
-        <em class="post-meta-item-text"> views </em>
-      </span>
-    </p>
+    <meta charset="UTF-8">
     
-    <p>所有程序在运行时都会用到内存，C语言使用手动的方式管理内存，Go等高级语言使用GC（垃圾回收）的方式管理内存，java语言在虚拟机（JVM）上运行，虚拟机同样使用GC管理内存资源。拥有GC的语言运行时的性能相比较没有GC的语言较低。</p>
+    <title>
+        rust之所有权 |
+        
+        七昻</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="所有程序在运行时都会用到内存，C语言使用手动的方式管理内存，Go等高级语言使用GC（垃圾回收）的方式管理内存，java语言在虚拟机（JVM）上运行，虚拟机同样使用GC管理内存资源。拥有GC的语言运行时的性能相比较没有GC的语言较低。 而在Rust语言中，性能与C&#x2F;C++相当，没有GC，他的内存管理方式是使用了所有权，借用，生命周期。这里我们先讲rust语言中的所有权。 所有权概念：  Rust中一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rust之所有权">
+<meta property="og:url" content="https://lzi7.com/2020/11/30/rust%E4%B9%8B%E6%89%80%E6%9C%89%E6%9D%83/index.html">
+<meta property="og:site_name" content="七昻">
+<meta property="og:description" content="所有程序在运行时都会用到内存，C语言使用手动的方式管理内存，Go等高级语言使用GC（垃圾回收）的方式管理内存，java语言在虚拟机（JVM）上运行，虚拟机同样使用GC管理内存资源。拥有GC的语言运行时的性能相比较没有GC的语言较低。 而在Rust语言中，性能与C&#x2F;C++相当，没有GC，他的内存管理方式是使用了所有权，借用，生命周期。这里我们先讲rust语言中的所有权。 所有权概念：  Rust中一">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-11-30T04:13:54.000Z">
+<meta property="article:modified_time" content="2020-12-03T01:31:47.081Z">
+<meta property="article:author" content="heisen">
+<meta property="article:tag" content="-rust">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://lzi7.com/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://lzi7.com/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+<body>
+
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://www.gravatar.com/avatar/7a585313ed855e8d652cbb3154a6056e?s=300&amp;d=mm&amp;r=g" id="avatar">
+</div>
+
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://lzi7.com/index.html">Home</a>
+        
+            <a class="false" href="https://lzi7.com/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://lzi7.com/about/index.html">About</a>
+        
+    </div>
+</div>
+
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">rust之所有权</h1>
+    <time id="post-date" datetime="2020-11-30T04:13:54.000Z">
+        November 30, 2020
+    </time>
+    <div id="post-content" class="markdown-body">
+        <p>所有程序在运行时都会用到内存，C语言使用手动的方式管理内存，Go等高级语言使用GC（垃圾回收）的方式管理内存，java语言在虚拟机（JVM）上运行，虚拟机同样使用GC管理内存资源。拥有GC的语言运行时的性能相比较没有GC的语言较低。</p>
 <p>而在Rust语言中，性能与C/C++相当，没有GC，他的内存管理方式是使用了所有权，借用，生命周期。这里我们先讲rust语言中的所有权。</p>
 <p>所有权概念：</p>
 <ul>
@@ -209,190 +116,65 @@ Rus...">
 
 <h4 id="悬指针"><a href="#悬指针" class="headerlink" title="悬指针"></a>悬指针</h4><p>悬指针是的是，空有一个指针但是没有实际指向数据的指针。例如：</p>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">	<span class="keyword">let</span> a = func();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">func</span></span>() -&gt; string &#123;</span><br><span class="line">	<span class="keyword">let</span> b = <span class="built_in">String</span>::from(<span class="string">"hello world!"</span>);</span><br><span class="line">	</span><br><span class="line">	&amp;b   <span class="comment">// 随着函数的结束，b作为局部变量由于释放并没有返回，返回的是一个引用的指针，这个指针并不能正确的指向数据，所以是错误的</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-  </article>
-  <div class="random-toc-area">
-  <button class="btn-hide-toc btn-hide-toc-show" style="display: none" onclick="TOCToggle()">Show TOC</button>
-  <button class="btn-hide-toc btn-hide-toc-hide" onclick="TOCToggle()">Hide TOC</button>
-  <div class="random-toc">
-    <h2>Table of Content</h2>
-    <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#变量的作用域"><span class="toc-text">变量的作用域</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#变量的所有权"><span class="toc-text">变量的所有权</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#变量做函数参数的所有权问题"><span class="toc-text">变量做函数参数的所有权问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#函数返回值的所有权问题"><span class="toc-text">函数返回值的所有权问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#借用所有权"><span class="toc-text">借用所有权</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#悬指针"><span class="toc-text">悬指针</span></a></li></ol>
-  </div>
+    </div>
+</article>
+
+<div id="paginator">
+    
 </div>
 
-  
-  
-<nav id="pagination">
-  
-    <a href="/2020/12/05/Rust%E4%B9%8B%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" class="prev">&larr; Prev post Rust之生命周期</a>
-  
-
-  
-
-  
-</nav>
-
-  <!-- JiaThis Button BEGIN -->
-
-<!-- JiaThis Button END -->
-
-
-      
-      
     </div>
-  </div>
+</div>
 
-  <div id="bottom-outer">
+<div id="bottom-outer">
     <div id="bottom-inner">
-      Site by 李自强 using
-      <a href="http://hexo.io" target="_blank" rel="noopener">Hexo</a> & <a href="https://github.com/stiekel/hexo-theme-random" target="_blank" rel="noopener">Random</a>
-      <br>
-      
+        2019-2021 heisen 皖ICP备16011445号
     </div>
-  </div>
 </div>
 
-</div>
-
-
-<div id="user-card">
-  <div class="center-field">
-    <img class="avatar" src="https://avatars2.githubusercontent.com/u/2735087?s=60&u=775d4033139cae6b23c593bcf59fa433224ba4e3&v=4">
-    <p id="description">golang'Rust</p>
-    <ul class="social-icon">
-  
-  
-    <li>
-      <a href="https://github.com/stiekel" target="_blank" rel="noopener">
-        
-          <i class="icon iconfont github">&#xe606;</i>
-        
-      </a>
-    </li>
-  
-    <li>
-      <a href="http://weibo.com/sidcn" target="_blank" rel="noopener">
-        
-          <i class="icon iconfont weibo">&#xe602;</i>
-        
-      </a>
-    </li>
-  
-    <li>
-      <a href="histkc@gmail.com">
-        
-          M
-        
-      </a>
-    </li>
-  
-</ul>
-  </div>
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
 </div>
 
 
-<div id="btn-view">Hide</div>
+    
+        <script src="https://lzi7.com/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://lzi7.com/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://lzi7.com/js/transition.js"></script>
+    
+        <script src="https://lzi7.com/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
 
 <script>
-// is trigger analytics / tongji script
-var isIgnoreHost = false;
-
-if(window && window.location && window.location.host) {
-  isIgnoreHost = ["localhost","127.0.0.1"].some(function(address){
-    return 0 === window.location.host.indexOf(address);
-  });
-}
-
-var isTriggerAnalytics = !( true && isIgnoreHost );
-
-</script>
-
-
-
-
-  
-  
-    <script src="/js/jquery-2.2.3.min.js"></script>
-  
-    <script src="/js/vegas.min.js"></script>
-  
-    <script src="/js/random.js"></script>
-  
-    <script src="/js/highlight.pack.js"></script>
-  
-    <script src="/js/jquery.mousewheel.pack.js"></script>
-  
-    <script src="/js/jquery.fancybox.pack.js"></script>
-  
-    <script src="/js/jquery.fancybox-thumbs.js"></script>
-  
-    <script src="/js/plyr.js"></script>
-  
-
-<script>
-
-  // fancybox
-  var backgroundImages = [];
-  
-  $('#post').each(function(i){
-    $(this).find('img').each(function(){
-      if ($(this).parent().hasClass('fancybox') || $(this).parent().hasClass('fancybox-thumb')) return;
-      var alt = this.alt || this.title;
-      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
-      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
     });
-    $(this).find('.fancybox').each(function(){
-      $(this).attr('rel', 'post' + i);
-    });
-  });
-  $(".fancybox").fancybox();
-
-var vegasConfig = {"preload­Image":true,"transition":["flash"],"timer":true,"delay":1500000,"shuffle":true,"count":12};
-var unsplashConfig = {"gravity":"center"};
-// is show background images
-var turnoffBackgroundImage = false;
-
-
-
-
-var backgroundColor = "34495E";
-
-$(".fancybox-thumb").fancybox({
-  prevEffect: 'none',
-  nextEffect: 'none',
-  helpers: {
-    title: {
-      type: 'outside'
-    },
-    thumbs: {
-      width: 50,
-      height: 50
-    }
-  }
-});
-
-// show video with plyr
-$(".video-container iframe").each(function(i){
-  var url = $(this).attr('src');
-  var id = url.split('/').pop();
-  var plyrContainer = document.createElement('div');
-  plyrContainer.className = 'plyr';
-  var plyrElement = document.createElement('div');
-  plyrElement.dataset.videoId = id;
-  switch(true) {
-    case url.search('youtube.com') >= 0:
-      plyrElement.dataset.type = 'youtube';
-      break;
-    case url.search('vimeo.com') >= 0:
-      plyrElement.dataset.type = 'vimeo';
-      break;
-    default:
-      return;
-  };
-  plyrContainer.appendChild(plyrElement);
-  $(this).parent().html(plyrContainer);
-});
-plyr.setup('.plyr', {iconUrl: '/css/sprite.svg'});
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
 </script>
 </body>
 </html>
-
