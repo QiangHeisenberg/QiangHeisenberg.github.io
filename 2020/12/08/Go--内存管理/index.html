@@ -11,7 +11,7 @@
     <meta name="description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。 开始之前我们了解一下并行和并发。 在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go runtime之内存管理">
-<meta property="og:url" content="https://lzi7.com/2020/12/08/Go%E4%B9%8B%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:url" content="https://lzi7.com/2020/12/08/Go--%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="七昻">
 <meta property="og:description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。 开始之前我们了解一下并行和并发。 在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后">
 <meta property="og:locale" content="en_US">
