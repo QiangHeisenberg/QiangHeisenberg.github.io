@@ -4,19 +4,19 @@
     <meta charset="UTF-8">
     
     <title>
-        Go runtime之内存管理 |
+        Go--runtime内存管理 |
         
         七昻</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。 开始之前我们了解一下并行和并发。 在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Go runtime之内存管理">
+<meta property="og:title" content="Go--runtime内存管理">
 <meta property="og:url" content="https://lzi7.com/2020/12/08/Go--%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="七昻">
 <meta property="og:description" content="Go语言的runtime中分为三大模块：内存管理、垃圾回收、协程调度。在每一个大的版本更新中，runtime性能也进步巨大。我们接下来将花几篇文章来分别解析一下Go runtime的几个部分。 开始之前我们了解一下并行和并发。 在我的理解中，一个CPU只能在同一个时刻进行一个进程，之所以在单核的情况下能够进行多任务的“并行”运行其实是CPU在进行一个进程的时候停下来，切换到另一个进程继续运行，然后">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-12-08T14:13:17.000Z">
-<meta property="article:modified_time" content="2020-12-12T10:30:27.165Z">
+<meta property="article:modified_time" content="2021-07-10T12:14:54.675Z">
 <meta property="article:author" content="heisen">
 <meta property="article:tag" content="-Go -runtime">
 <meta name="twitter:card" content="summary">
@@ -52,7 +52,7 @@
 <div id="content-outer" class="container">
     <div id="content-inner">
         <article id="post">
-    <h1 id="post-title">Go runtime之内存管理</h1>
+    <h1 id="post-title">Go--runtime内存管理</h1>
     <time id="post-date" datetime="2020-12-08T14:13:17.000Z">
         December 08, 2020
     </time>
