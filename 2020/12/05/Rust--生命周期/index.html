@@ -1,20 +1,132 @@
-extends partial/layout.pug
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>
+        Rust--生命周期 |
+        
+        七昻</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="生命周期解决的问题对数据的引用会导致及其复杂的资源处理的问题。rust中使用所有权、借用和声明周期来应对资源释放以及指针的挑战。 声明周期可以防止悬垂指针的使用。例子： 1234567891011121314151617fn main() &amp;#123;	let a;		&amp;#123;			let str1 &#x3D; &quot;hello&quot;;			let str2 &#x3D; &quot;world&quot;;			a &#x3D; longer(s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rust--生命周期">
+<meta property="og:url" content="https://lzi7.com/2020/12/05/Rust--%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/index.html">
+<meta property="og:site_name" content="七昻">
+<meta property="og:description" content="生命周期解决的问题对数据的引用会导致及其复杂的资源处理的问题。rust中使用所有权、借用和声明周期来应对资源释放以及指针的挑战。 声明周期可以防止悬垂指针的使用。例子： 1234567891011121314151617fn main() &amp;#123;	let a;		&amp;#123;			let str1 &#x3D; &quot;hello&quot;;			let str2 &#x3D; &quot;world&quot;;			a &#x3D; longer(s">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-12-05T02:50:47.000Z">
+<meta property="article:modified_time" content="2021-07-10T12:15:26.486Z">
+<meta property="article:author" content="heisen">
+<meta property="article:tag" content="-rust">
+<meta name="twitter:card" content="summary">
+    
+    
+    
+        
+            <link rel="stylesheet" href="https://lzi7.com/css/markdown.css">
+        
+            <link rel="stylesheet" href="https://lzi7.com/css/july.css">
+        
+    
+<meta name="generator" content="Hexo 4.2.1"></head>
+<body>
 
-block site_title
-    != page.title + ' • ' + config.title
+<div id="banner-outer" class="hidden">
+    <div id="banner-image" style="background-image: url()"></div>
+    <img src="https://avatars.githubusercontent.com/u/46313511?v=4" id="avatar">
+</div>
 
-block description
-    - var desc = page.desc || page.title + ' - ' + config.author;
-    meta(name='description', content=desc)
+<div id="menu-outer">
+    <div id="menu-inner">
+        
+            <a class="false" href="https://lzi7.com/index.html">Home</a>
+        
+            <a class="false" href="https://lzi7.com/archives/index.html">Archives</a>
+        
+            <a class="false" href="https://lzi7.com/about/index.html">About</a>
+        
+    </div>
+</div>
 
-block container
-    include mixins/post.pug
-    +post(page)
+<div id="content-outer" class="container">
+    <div id="content-inner">
+        <article id="post">
+    <h1 id="post-title">Rust--生命周期</h1>
+    <time id="post-date" datetime="2020-12-05T02:50:47.000Z">
+        December 05, 2020
+    </time>
+    <div id="post-content" class="markdown-body">
+        <h4 id="生命周期解决的问题"><a href="#生命周期解决的问题" class="headerlink" title="生命周期解决的问题"></a>生命周期解决的问题</h4><p>对数据的引用会导致及其复杂的资源处理的问题。rust中使用所有权、借用和声明周期来应对资源释放以及指针的挑战。</p>
+<p>声明周期可以防止悬垂指针的使用。例子：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">	<span class="keyword">let</span> a;</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">let</span> str1 = <span class="string">"hello"</span>;</span><br><span class="line">			<span class="keyword">let</span> str2 = <span class="string">"world"</span>;</span><br><span class="line">			a = longer(str1, str2);</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="built_in">println!</span>(<span class="string">"string = &#123;&#125;"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">longer</span></span>(s1: &amp;<span class="built_in">str</span>, s2: &amp;<span class="built_in">str</span>) &#123;</span><br><span class="line">	<span class="keyword">if</span> s1.len() &lt; s2.len() &#123;</span><br><span class="line">		s2</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		s1</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-block pagination
-    include mixins/paginator.pug
-    +post()
-    include partial/comment.pug
+<p>以上这段程序不可编译，因为longer函数在返回时，str1和str2已经失效了。返回值返回的是过期的引用，这样造成了变量生命周期的问题。</p>
+<h4 id="生命周期的注释"><a href="#生命周期的注释" class="headerlink" title="生命周期的注释"></a>生命周期的注释</h4><p>解决这个问题的办法是显示的表明生命周期。示例：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">main</span></span>() &#123;</span><br><span class="line">	<span class="keyword">let</span> a;</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">let</span> str1 = <span class="string">"hello"</span>;</span><br><span class="line">		<span class="keyword">let</span> str2 = <span class="string">"world"</span>;</span><br><span class="line">		a = longer(str1, str2);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">println!</span>(<span class="string">"&#123;&#125; is longer"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fn</span> <span class="title">longer</span></span>(s1: &amp;<span class="symbol">'a</span> <span class="built_in">str</span>, s2: &amp;<span class="symbol">'a</span> <span class="built_in">str</span>) -&gt;&amp;<span class="symbol">'a</span> <span class="built_in">str</span> &#123;</span><br><span class="line">	<span class="keyword">if</span> s1.len() &lt; s2.len() &#123;</span><br><span class="line">		s2</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		s1</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-block copyright
-    include partial/copyright.pug
+<p>上述示例中，用生命周期的注释来使得函数的返回值和参数的声明周期是一致的。</p>
+<h4 id="静态声明周期"><a href="#静态声明周期" class="headerlink" title="静态声明周期"></a>静态声明周期</h4><p><strong><em>未完待续</em></strong></p>
+
+    </div>
+</article>
+
+<div id="paginator">
+    
+</div>
+
+    </div>
+</div>
+
+<div id="bottom-outer">
+    <div id="bottom-inner">
+        2019-2021 heisen 皖ICP备16011445号
+    </div>
+</div>
+
+<div id="to-top">
+    <i class="iconfont icon-up"></i>
+</div>
+
+
+    
+        <script src="https://lzi7.com/js/jquery-3.4.1.min.js"></script>
+    
+        <script src="https://lzi7.com/js/highlight-9.13.1.min.js"></script>
+    
+        <script src="https://lzi7.com/js/transition.js"></script>
+    
+        <script src="https://lzi7.com/js/smooth-scroll.min.js"></script>
+    
+
+
+
+    <script>
+      $(function () {
+        $('#banner-outer').addClass('fade-out')
+        $('#menu-outer').addClass('fade-show')
+
+        $('pre').each(function (i, block) {
+          hljs.highlightBlock(block);
+        });
+      })
+    </script>
+
+
+<script>
+  $(function () {
+    $(window).scroll(function () {
+      if ($(window).scrollTop() > 150) {
+        $("#to-top").fadeIn();
+      } else {
+        $("#to-top").fadeOut();
+      }
+    });
+    $("#to-top").click(function () {
+      $("body,html").animate({scrollTop: 0}, 500);
+      return false;
+    })
+  })
+</script>
+</body>
+</html>
